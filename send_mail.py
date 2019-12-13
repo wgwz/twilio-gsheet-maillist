@@ -1,9 +1,15 @@
+# google sheets imports
 from __future__ import print_function
 import pickle
 import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+
+# sendgrid imports
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -42,6 +48,30 @@ def main():
     result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
                                 range=SAMPLE_RANGE_NAME).execute()
     print(result)
+
+    # get the emails from the spreadsheet
+    emails = []
+    for row in result["values"][1:]:
+        try:
+            emails.append(row[1])
+        except IndexError:
+            pass
+    print(emails)
+
+    # set up sendgrid and blastoff the emails
+    SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+    message = Mail(
+        from_email="wgwz@pm.me",
+        to_emails=emails,
+        subject="Test Mail",
+        plain_text_content="Hello world",
+    )
+    sg = SendGridAPIClient(SENDGRID_API_KEY)
+    resp = sg.send(message)
+    print(resp.status_code)
+    print(resp.body)
+    print(resp.headers)
+
 
 if __name__ == '__main__':
     main()
