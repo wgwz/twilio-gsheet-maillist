@@ -1,61 +1,64 @@
 # google sheets imports
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # sendgrid imports
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = "1LrhTBlWE4me97Zt2LnH7Q72x_fBvkedaOomzNXK8DY0"
-SAMPLE_RANGE_NAME = "A:B"
+# markdown
+import misaka as m
 
 
-def gsheet():
-    raise NotImplementedError
+def client():
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        'My Mailing List-d357f4649475.json',
+        scope
+    )
+    gc = gspread.authorize(credentials)
+    return gc
 
 
-def emails():
-    # get the emails from the spreadsheet
-    emails = []
-    for row in result["values"][1:]:
-        try:
-            emails.append(row[1])
-        except IndexError:
-            pass
-    print(emails)
+def spreadsheet(client, name):
+    return client.open(name)
 
 
-def blast_off():
-    # set up sendgrid and blastoff the emails
+def emails(worksheet):
+    for row in worksheet.get_all_records():
+        yield row["Email Address"]
+
+
+def render(filename):
+    with open(filename, "r") as fp:
+        return m.html(fp.read())
+
+
+def send_email(subject, html_content, to_emails):
     SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+    sg = SendGridAPIClient(SENDGRID_API_KEY)
     message = Mail(
         from_email="wgwz@pm.me",
-        to_emails=emails,
-        subject="This is a new post",
-        plain_text_content="Helloworld",
+        to_emails=to_emails,
+        subject=subject,
+        html_content=html_content,
     )
-    sg = SendGridAPIClient(SENDGRID_API_KEY)
     resp = sg.send(message)
     print(resp.status_code)
     print(resp.body)
     print(resp.headers)
 
+
 if __name__ == "__main__":
-    import gspread
-    from oauth2client.service_account import ServiceAccountCredentials
-    
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-    
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        'My Mailing List-d357f4649475.json',
-        scope
-    )
-    
-    gc = gspread.authorize(credentials)
-    
-    wks = gc.open("My Mailing List Sheet").sheet1
-    print(wks)
-    import pdb; pdb.set_trace()
+    gc = client()
+    ss = spreadsheet(gc, "My Mailing List Sheet") 
+    wks = ss.sheet1
+
+    to_emails = list(emails(wks))
+    subject = "Welcome!"
+    html_content = render("posts/my-first-post.md")
+    print(html_content)
+
+    send_email(subject, html_content, to_emails)
