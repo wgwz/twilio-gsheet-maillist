@@ -1,3 +1,4 @@
+from pprint import pprint as print
 # google sheets imports
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -5,10 +6,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 # sendgrid imports
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Bcc, Mail
 
 # markdown
 import misaka as m
+
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 
 def client():
@@ -37,18 +40,22 @@ def render(filename):
 
 
 def send_email(subject, html_content, to_emails):
-    SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
     sg = SendGridAPIClient(SENDGRID_API_KEY)
-    message = Mail(
-        from_email="wgwz@pm.me",
-        to_emails=to_emails,
-        subject=subject,
-        html_content=html_content,
-    )
-    resp = sg.send(message)
-    print(resp.status_code)
-    print(resp.body)
-    print(resp.headers)
+    for email in to_emails:
+        message = Mail(
+            from_email="klawlor419@gmail.com",
+            to_emails=[email]
+        )
+        message.dynamic_template_data = {
+            "email_body": html_content,
+            "subject": subject,
+        }
+        message.template_id = "d-4c873951ee8342d18507ac1c81050663"
+        try:
+            resp = sg.send(message)
+            print(resp.status_code)
+        except Exception as exc:
+            print(exc.to_dict)
 
 
 if __name__ == "__main__":
