@@ -1,3 +1,4 @@
 token.pickle
 venv
 credentials.json
+.env
