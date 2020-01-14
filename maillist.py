@@ -13,7 +13,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Bcc, Mail
 
 # markdown
-import misaka as m
+import markdown2 as m
 
 
 def client(cred_file_path):
@@ -39,11 +39,11 @@ def emails(worksheet):
 
 
 def render(fp):
-    return m.html(fp.read())
+    return m.markdown(fp.read())
 
 
 def send_email(from_addr, subject, html_content, to_emails):
-    sg = SendGridAPIClient(os.environ.get("SENDGRID_API_KEY"))
+    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
     unsubscribe = f"<p>To unsubscribe email: {from_addr}</p>"
     for email in to_emails:
         message = Mail(
