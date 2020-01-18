@@ -14,8 +14,9 @@ from sendgrid.helpers.mail import Bcc, Mail
 import markdown2 as m
 
 
-with open("maillist.json", "r") as fp:
-    CONFIG = json.load(fp)
+def load_config():
+    with open("maillist.json", "r") as fp:
+        return json.load(fp)
 
 
 def client(cred_file_path):
@@ -44,8 +45,8 @@ def render(fp):
     return m.markdown(fp.read())
 
 
-def send_email(from_addr, subject, html_content, to_emails):
-    sg = SendGridAPIClient(CONFIG["SENDGRID_API_KEY"])
+def send_email(from_addr, subject, html_content, to_emails, api_key):
+    sg = SendGridAPIClient(api_key)
     unsubscribe = f"<a href='mailto:{from_addr}?subject=Unsubscribe'>Unsubscribe</a>"
     for email in to_emails:
         message = Mail(
@@ -73,9 +74,11 @@ if __name__ == "__main__":
     parser.add_argument("--subject", "-s", required=True, help="Subject for the post.")
 
     # config values
-    cred_file_path = CONFIG["GOOGLE_CRED_FILE"]
-    spreadsheet_name = CONFIG["SPREADSHEET_NAME"]
-    from_address = CONFIG["FROM_ADDRESS"]
+    config = load_config()
+    api_key = config["SENDGRID_API_KEY"]
+    cred_file_path = config["GOOGLE_CRED_FILE"]
+    spreadsheet_name = config["SPREADSHEET_NAME"]
+    from_address = config["FROM_ADDRESS"]
 
     # cli arguments
     args = parser.parse_args()
@@ -87,4 +90,4 @@ if __name__ == "__main__":
     to_emails = list(emails(wks))
     html_content = render(args.markdown)
 
-    send_email(from_address, args.subject, html_content, to_emails)
+    send_email(from_address, args.subject, html_content, to_emails, api_key)
