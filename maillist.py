@@ -1,7 +1,5 @@
 import argparse
-
-# config
-from dotenv import load_dotenv
+import json
 
 # google sheets imports
 import gspread
@@ -14,6 +12,10 @@ from sendgrid.helpers.mail import Bcc, Mail
 
 # markdown
 import markdown2 as m
+
+
+with open("maillist.json", "r") as fp:
+    CONFIG = json.load(fp)
 
 
 def client(cred_file_path):
@@ -43,8 +45,8 @@ def render(fp):
 
 
 def send_email(from_addr, subject, html_content, to_emails):
-    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-    unsubscribe = f"<p>To unsubscribe email: {from_addr}</p>"
+    sg = SendGridAPIClient(CONFIG["SENDGRID_API_KEY"])
+    unsubscribe = f"<a href='mailto:{from_addr}?subject=Unsubscribe'>Unsubscribe</a>"
     for email in to_emails:
         message = Mail(
             subject=subject,
@@ -60,8 +62,6 @@ def send_email(from_addr, subject, html_content, to_emails):
 
 if __name__ == "__main__":
 
-    load_dotenv()
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--markdown",
@@ -73,9 +73,9 @@ if __name__ == "__main__":
     parser.add_argument("--subject", "-s", required=True, help="Subject for the post.")
 
     # config values
-    cred_file_path = os.getenv("GOOGLE_CRED_FILE")
-    spreadsheet_name = os.getenv("SPREADSHEET_NAME")
-    from_address = os.getenv("FROM_ADDRESS")
+    cred_file_path = CONFIG["GOOGLE_CRED_FILE"]
+    spreadsheet_name = CONFIG["SPREADSHEET_NAME"]
+    from_address = CONFIG["FROM_ADDRESS"]
 
     # cli arguments
     args = parser.parse_args()

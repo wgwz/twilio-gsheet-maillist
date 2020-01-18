@@ -1,4 +1,3 @@
-token.pickle
 venv
 credentials.json
-.env
+maillist.json
