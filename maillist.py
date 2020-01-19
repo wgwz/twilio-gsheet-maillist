@@ -6,7 +6,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # sendgrid imports
-import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Bcc, Mail
 
@@ -51,7 +50,7 @@ def send_email(from_addr, subject, html_content, to_emails, api_key):
     for email in to_emails:
         message = Mail(
             subject=subject,
-            from_email=from_address,
+            from_email=from_addr,
             html_content=f"{html_content}\n{unsubscribe}",
             to_emails=[email],
         )
