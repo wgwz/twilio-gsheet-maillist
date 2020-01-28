@@ -43,11 +43,10 @@ def emails(worksheet):
 def render(fp):
     return m.markdown(fp.read())
 
-
 def send_email(from_addr, subject, html_content, to_emails, api_key):
     sg = SendGridAPIClient(api_key)
-    unsubscribe = f"<a href='mailto:{from_addr}?subject=Unsubscribe'>Unsubscribe</a>"
-    for email in to_emails:
+    unsubscribe = "<a href='mailto:{}?subject=Unsubscribe'>Unsubscribe</a>".format(from_addr)
+    for counter, email in enumerate(to_emails):
         message = Mail(
             subject=subject,
             from_email=from_addr,
@@ -56,8 +55,9 @@ def send_email(from_addr, subject, html_content, to_emails, api_key):
         )
         try:
             resp = sg.send(message)
+            print("{} emails sent".format(counter + 1))
         except Exception as exc:
-            print(exc)
+            print("Could not send email to {} due {}".format(email, str(exc)))
 
 
 if __name__ == "__main__":
@@ -72,15 +72,15 @@ if __name__ == "__main__":
     )
     parser.add_argument("--subject", "-s", required=True, help="Subject for the post.")
 
+    # cli arguments
+    args = parser.parse_args()
+
     # config values
     config = load_config()
     api_key = config["SENDGRID_API_KEY"]
     cred_file_path = config["GOOGLE_CRED_FILE"]
     spreadsheet_name = config["SPREADSHEET_NAME"]
     from_address = config["FROM_ADDRESS"]
-
-    # cli arguments
-    args = parser.parse_args()
 
     gc = client(cred_file_path)
     ss = spreadsheet(gc, spreadsheet_name)
